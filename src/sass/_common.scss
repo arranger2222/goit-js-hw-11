@@ -1,1 +1,8 @@
 @import '~node_modules/modern-normalize/modern-normalize.css';
+
+
+.gallery {
+    display: flex;
+    flex-wrap: wrap;
+}
+
