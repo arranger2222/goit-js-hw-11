@@ -1,75 +1,70 @@
-// import './css/styles.css'
-import axios from "axios";
-import { Notify } from 'notiflix/build/notiflix-notify-aio';
-import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
+import { fetchImg } from './js/fetchImages';
+import { createCardMarkup } from './js/createCardMarkup';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
+import SimpleLightbox from "simplelightbox";
+import { resetForm } from './js/resetForm';
+import { onScroll, onToTopBtn } from './js/onTopButton';
 
 
-const form = document.querySelector('#search-form');
 const galleryWrap = document.querySelector('.gallery')
+const form = document.querySelector('#search-form');
+const per_page = 40;
 
+const galleryOptions = {
+  close: true,
+  closeText: 'X',
+  overlayOpacity: 0.9,
+  captionDelay: 250,
+  showCounter: true
+}
 
-const BASE_URL = 'https://pixabay.com/api/?';
-const API_KEY = 'key=28348540-5acc26c4c4c16999acfb2f011';
-const per_page = 'per_page=40';
+const gallery = new SimpleLightbox('.gallery a', galleryOptions);
 
-
-const createdGallery = new SimpleLightbox('.gallery a');
 let page = 1;
 let query = '';
 
 
-form.addEventListener('submit', onSearch);   
+onScroll();
+onToTopBtn();
 
+
+form.addEventListener('submit', onSearch);
 
 
 function onSearch(e){
     e.preventDefault();
     galleryWrap.innerHTML ='';
+    gallery.refresh()
     query = e.currentTarget.searchQuery.value.trim();
-    page = 1;
     
-    if(query === ''){Notify.failure('The search string cannot be empty. Please specify your search query.')
+    if(query === ''){
+      emptyStringMessage();
+      galleryWrap.innerHTML ='';
+      page = 1;
+      query = '';
+      // resetForm();
     return};
-    
-    fetchImg(query, page);
+
+
+    fetchImg (query, page, per_page)
+    .then(response => {
+      if(response.data.hits.length === 0){
+            notFoundMessage();
+            resetForm();
+          return
+         };
+         
+          galleryWrap.insertAdjacentHTML('beforeend', createCardMarkup(response.data.hits));
+          successMessage(response.data.totalHits);
+          gallery.refresh();
+        })
+      .catch(error => console.log(error));    
+     
     observer.observe(document.querySelector('.scroll-guard'));
-}
-
-function fetchImg (query, page) {
-  axios.get(`${BASE_URL}${API_KEY}&q=${query}&image_type=photo&$orientation=horizontal&safesearch-true&page=${page}&${per_page}`)
-    .then(res => {          
-    createCardMarkup(res.data.hits);
-    });
-}
+};
 
 
-function createCardMarkup(arr){
-    const cardMarkup = arr.map(item=>  
-      
-            `<a class='gallery__item' href='${item.largeImageURL}'>
-            <div class="photo-card">
-            <img class="gallery__image" src="${item.previewURL}" alt="" loading="lazy" />
-            <div class="info">
-              <p class="info-item">
-                <b>Likes: ${item.likes}</b>
-              </p>
-              <p class="info-item">
-                <b>Views: ${item.views}</b>
-              </p>
-              <p class="info-item">
-                <b>Comments: ${item.comments}</b>
-              </p>
-              <p class="info-item">
-                <b>Downloads: ${item.downloads}</b>
-              </p>
-            </div>
-          </div>
-          </a>`        
-      ).join('');
-    
-  galleryWrap.insertAdjacentHTML('beforeend', cardMarkup);
-}
 
 const options = {
   rootMargin: '200px',
@@ -80,13 +75,41 @@ const observer = new IntersectionObserver(entries => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
       console.log('entry');
+      
       page += 1;
-      fetchImg (query, page);
-    }
+      // gallery.destroy();
+      
+      fetchImg(query, page, per_page)
+      .then(response => {
+          const totalPages = Math.ceil(response.data.totalHits / per_page)
+          if(page > totalPages){
+            endScrollMessage();
+            }
+          galleryWrap.insertAdjacentHTML('beforeend', createCardMarkup(response.data.hits));        
+          gallery.refresh();
+          })
+      .catch(error => console.log(error));
+     }
   });
 }, options);
 
 
+function notFoundMessage(){
+  Notify.failure("We're sorry, but you've reached the end of search results.")
+  return
+};
 
+function successMessage(value){
+  Notify.success(`Hooray! We found ${value} images.`)
+  return
+};
 
-// Notify.failure("Oops, there is no country with that name");
+function emptyStringMessage(){
+  Notify.failure('The search string cannot be empty. Please specify your search query.')
+  return
+};
+
+function endScrollMessage(){
+  Notify.failure("We're sorry, but you've reached the end of search results.")
+  return
+};
