@@ -1,30 +1,25 @@
 export { createCardMarkup };
 
 function createCardMarkup(arr){    
-   return arr.map(item=>  
-      
-            `<a class='gallery__item gallery__link' href='${item.largeImageURL}'>
-            <div class="photo-card">
-            <img class="gallery__image" src="${item.previewURL}" alt="${item.tags}" loading="lazy" />
-            <div class="info">
+   return arr.map(item=>      
+      `<div class='gallery__item'>
+        <a href='${item.largeImageURL}'>
+          <img class="gallery__image" src="${item.webformatURL}" alt="${item.tags}" loading="lazy" />
+            <div class="gallery__info">
               <p class="info-item">
-                <b>Likes:</b>
-                <b>${item.likes}</b>
+                <b>Likes:</b><br><span>${item.likes}</span>
               </p>
               <p class="info-item">
-                <b>Views:</b>
-                <b>${item.views}</b>
+                <b>Views:</b><br><span>${item.views}</span>
               </p>
               <p class="info-item">
-                <b>Comments:</b>
-                <b>${item.comments}</b>
+                <b>Comments:</b><br><span>${item.comments}</span>
               </p>
               <p class="info-item">
-                <b>Downloads:</b>
-                <b>${item.downloads}</b>
+                <b>Downloads:</b><br><span>${item.downloads}</span>
               </p>
-            </div>
           </div>
-          </a>`        
-      ).join('');  
+        </a>
+      </div>`        
+    ).join('');  
 };

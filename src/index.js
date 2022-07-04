@@ -3,7 +3,6 @@ import { fetchImg } from './js/fetchImages';
 import { createCardMarkup } from './js/createCardMarkup';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import SimpleLightbox from "simplelightbox";
-import { resetForm } from './js/resetForm';
 import { onScroll, onToTopBtn } from './js/onTopButton';
 
 
@@ -33,6 +32,8 @@ form.addEventListener('submit', onSearch);
 
 
 function onSearch(e){
+    resetForm();
+    onToTopBtn();
     e.preventDefault();
     galleryWrap.innerHTML ='';
     gallery.refresh()
@@ -60,8 +61,6 @@ function onSearch(e){
           gallery.refresh();
         })
       .catch(error => console.log(error));    
-     
-    observer.observe(document.querySelector('.scroll-guard'));
 };
 
 
@@ -77,8 +76,7 @@ const observer = new IntersectionObserver(entries => {
       console.log('entry');
       
       page += 1;
-      // gallery.destroy();
-      
+            
       fetchImg(query, page, per_page)
       .then(response => {
           const totalPages = Math.ceil(response.data.totalHits / per_page)
@@ -93,9 +91,10 @@ const observer = new IntersectionObserver(entries => {
   });
 }, options);
 
+observer.observe(document.querySelector('.scroll-guard'));
 
 function notFoundMessage(){
-  Notify.failure("We're sorry, but you've reached the end of search results.")
+  Notify.failure("Sorry, there are no images matching your search query. Please try again.")
   return
 };
 
@@ -110,6 +109,11 @@ function emptyStringMessage(){
 };
 
 function endScrollMessage(){
-  Notify.failure("We're sorry, but you've reached the end of search results.")
+  Notify.warning("We're sorry, but you've reached the end of search results.")
   return
 };
+
+function resetForm(){
+  page = 1;
+  query = '';
+  }
